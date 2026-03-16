@@ -33,6 +33,24 @@ def run(selected_colour):
             mask = cv2.inRange(hsv, (94,80,2), (126,255,255))
             print("Blue mask created")
 
+        # Seperate the object into contours
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area > 500:  # ignore small noise
+                x, y, w, h = cv2.boundingRect(cnt)
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (0,255,0), 2)
+
+        # count how many objects are detected
+        count = 0
+        for cnt in contours:
+            if cv2.contourArea(cnt) > 500:
+                count += 1
+        # Display the count on the frame
+        cv2.putText(frame, f"Objects: {count}", (20,50),
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+
+        # Added cleaning steps to reduce noise in the mask and show results in separate windows
         result = cv2.bitwise_and(frame, frame, mask=mask)
         cleaned = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_CLOSE, kernel)
